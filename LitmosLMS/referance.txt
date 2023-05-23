@@ -1,0 +1,13 @@
+REST API 주소 기록
+--
+https://api.litmos.com/v1.svc/
+
+
+- 사용자 정보 불러오기 최대 1000명까지만 가능
+url = "https://api.litmos.com/v1.svc/users?source=MY-APP&limit=1000&format=json"
+
+- id로 사람 정보 찾아오기
+# url = "https://api.litmos.com/v1.svc/users/S9dZexyug9_qe2ALtWq9Rg2?source=MY-APP&limit=1000&format=json"
+
+- ID로 사람 정보 찾아오기
+# url = "https://api.litmos.com/v1.svc/users/U000778@coupartners.com?source=MY-APP&limit=1000&format=json"

@@ -1,0 +1,48 @@
+{
+  "macro": {
+    "title": "zen create test #1",
+    "active": true,
+    "actions": [
+      {
+        "field": "subject",
+        "value": "zen create test #1"
+      },
+      {
+        "field": "priority",
+        "value": "normal"
+      },
+      {
+        "field": "assignee_id",
+        "value": "current_user"
+      },
+      {
+        "field": "current_tags",
+        "value": "pj_7macro test_cbr2 cbr sellertransfer_escalation cbr_abr"
+      },
+      {
+        "field": "remove_tags",
+        "value": "test_cbr1 test_cbr3 test_cbr4 test_cbr5 test_cbr6 test_cbr7 test_cbr8"
+      },
+      {
+        "field": "comment_value_html",
+        "value": "<p>{|||{<br></p><p>&lt;본 가이드는 참고용입니다. 삭제하지 않으셔도 되고, 정확한 내용은 지식을 참고 해주시기 바랍니다.&gt;</p><h4>★고객관리 필요 문의</h4><blockquote><h3>1. \"제가 배송완료 될 때까지 관리해 드릴 예정이니, 안심하고 기다려 주시길 부탁 드립니다.\"<br>2. 안내, 이관, 약속콜, 전산처리 등 고객 문의에 대한 처리가 모두 완료 되었다면 [해결] 제출</h3></blockquote><p><b><br></b></p><p><b>※ CHAT 채널의 경우, 기본 OB 연락수단은 \"전화\"</b></p><hr><p><b>■ 안내사항</b><br></p><p>&nbsp;1. 배송상태값 및 확인되는 <b>★배송흐름 안내★</b><br></p><p>&nbsp;2. 배송상세 안내 후, 고객의사에 따라 처리<br></p><p>&nbsp; - 판매자 확인을 원할 경우<br></p><p>&nbsp; &nbsp;1) 판매자 확인 후 안내드리겠음 안내<br></p><p>&nbsp; &nbsp; &gt; 단, 고객이 전화 거부 및 문자 안내를 원하는 경우, 사전취소 동의를 받아 진행<br></p><p>&nbsp; &nbsp;2) <b>★판매자 연락 두절 시, 재 연락 예정★</b>인 점 안내 (반드시 안내 필수)<br></p><p>&nbsp; &nbsp;3) 판매자이관하여 배송일정 확인 후 안내<br></p><p>&nbsp; &nbsp; &gt; 판매자 답변 내용 안내 및 배송완료 시점까지 관리 예정 안내<br></p><p>&nbsp; &nbsp; &gt; 판매자 연락 두절 시, 연락 두절인 점 안내 후 취소를 원하는 경우 취소 진행<br></p><p><br></p><p>※ 취소를 원할 경우 0202177 매크로 번호를 입력해 주세요.<br></p><p>※ <a href=\"https://support.coupang.com/hc/ko/articles/4402129291801\" target=\"_blank\" rel=\"noreferrer\">[공지][판매자배송]택배사 일부 지역 파업으로 인한 배송 지연 문의 처리 가이드 (6/9~)</a> 참고</p><p><br></p><p><b>■ 이관 매크로</b> : 이관(자티켓)<br></p><p>&nbsp;- CS | 판매자이관&gt;배송지연&gt;배송예정일(답변필요)_2202</p><hr><p>}|||}</p><h4>▼이력작성▼ (하단에 작성하세요.)</h4>"
+      },
+      {
+        "field": "comment_mode_is_public",
+        "value": "false"
+      },
+      {
+        "field": "custom_fields_360026109092",
+        "value": "del_zddelimiter_del_a_zddelimiter_del_a_003"
+      },
+      {
+        "field": "custom_fields_1900000645108",
+        "value": "cs_sla_basic"
+      }
+    ],
+    "restriction": {
+      "type": "User",
+      "id": 396369044871
+    }
+  }
+}

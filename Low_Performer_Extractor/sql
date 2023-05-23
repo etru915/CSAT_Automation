@@ -1,0 +1,355 @@
+drop table if exists temp.jiraissue_km;
+create table temp.jiraissue_km as
+(
+select jiraissue.id
+       , jiraissue.reporter
+       , jiraissue.assignee
+       , jiraissue.summary
+       , jiraissue.description
+       , resolution.pname as resolution
+       , jiraissue.issuestatus
+       , jiraissue.created
+       , jiraissue.updated
+       , jiraissue.duedate
+       , jiraissue.resolutiondate
+       , jiraissue.issuenum 
+       , priority.pname as priority
+       , issuetype.pname as issuetype
+       , issuestatus.pname as status
+       , jiraissue.issue_key
+       , template.TEMPLATE_DETAIL_ID
+       , case when template.TEMPLATE_DETAIL_ID=1088 then '신규' --'1-① 지식화 신규_공통' 
+              when template.TEMPLATE_DETAIL_ID=1089 then '신규' --'1-② 지식화 신규_리콜'
+              when template.TEMPLATE_DETAIL_ID=1090 then '신규' --'1-③ 지식화 신규_마이쿠팡/RING'
+              when template.TEMPLATE_DETAIL_ID=1092 then '신규' --'1-④ 지식화 신규_오류'
+              when template.TEMPLATE_DETAIL_ID=1093 then '신규' --'1-⑤ 지식화 신규_프로모션'
+              when template.TEMPLATE_DETAIL_ID=1094 then '수정' --'2- 지식 수정'
+              when template.TEMPLATE_DETAIL_ID=1095 then '삭제' --'3- 지식 삭제'
+              when template.TEMPLATE_DETAIL_ID=1096 then '신규' --'1- 검토 요청_신규'
+              when template.TEMPLATE_DETAIL_ID=1097 then '신규' --'1- 신규 등록 요청'
+              when template.TEMPLATE_DETAIL_ID=1098 then '수정' --'2- 수정 요청'
+              when template.TEMPLATE_DETAIL_ID=1100 then '수정' --'2- 검토 요청_수정'
+              when template.TEMPLATE_DETAIL_ID=1109 then 'Q&A'--'CS Q&A Template'
+              when template.TEMPLATE_DETAIL_ID=1099 then '삭제' -- '3- 삭제 요청'
+              else NULL 
+         end as template
+       from (select id
+                    , pname 
+                    from ods.issuetype 
+                    where pname in ('Knowledge Publishing','Q&A','Message','FAQ') 
+                    ) as issuetype
+       inner join ( select id
+                           , reporter
+                           , assignee
+                           , issuetype
+                           , summary
+                           , description
+                           , priority
+                           , resolution
+                           , issuestatus
+                           , created
+                           , updated
+                           , duedate
+                           , resolutiondate
+                           , issuenum
+                           , concat('CUSTOMER-', cast(issuenum as varchar) ) as issue_key
+                           , dw_load_dt 
+                                                                   from ods.jiraissue 
+                                                                   where 1=1
+                                                                                                                   and (resolution is null or resolution != '10408')
+                                                                                                                            )  as jiraissue on jiraissue.issuetype=issuetype.id
+                                   
+       inner join (select pname,id from ods.issuestatus) as issuestatus on jiraissue.issuestatus=issuestatus.id
+       left join  (select id,pname from ods.resolution) as resolution on jiraissue.resolution=resolution.id
+       inner join (select id, pname from ods.priority) as priority on priority.id=jiraissue.priority
+       left join (select key, TEMPLATE_DETAIL_ID from ods.AO_33A75D_IT_CREATED) as template on template.key= jiraissue.issue_key limit 1
+                    );
+                   
+                   
+drop table if exists temp.jirafield_km;                
+ 
+create table temp.jirafield_km as
+(                  
+select distinct
+      jiraissue.id   
+      , jiraissue.issuetype
+      , jiraissue.priority
+      , jiraissue.summary
+      , jiraissue.description
+      , jiraissue.template
+      , tr_cat1_max_date.customfield
+      , case when tr_cat1_max_date.customfield = 21362 then tr_cat1_msg.customvalue else null end as keyword
+      , case when tr_cat1_max_date.customfield = 21342 then tr_cat1_msg.customvalue else null end as Business_type
+      , case when tr_cat1_max_date.customfield = 21341 then tr_cat1_msg.customvalue else null end as Category_1
+      , case when tr_cat2_max_date.customfield = 21341 then tr_cat2_msg.customvalue else null end as Category_2
+      , case when tr_cat1_max_date.customfield = 21343 then tr_cat1_msg.customvalue else null end as Inspection_type
+      , case when tr_cat1_max_date.customfield = 21372 then tr_cat1_msg.customvalue else null end as Request_type     
+      , case when tr_cat1_max_date.customfield = 21344 then tr_cat1_msg.customvalue else null end as Message_Category      
+      , case when tr_cat1_max_date.customfield = 21346 then tr_cat1_msg.customvalue else null end as Urgent_level               
+      , case when tr_cat1_max_date.customfield = 18901 then tr_cat1_msg.customvalue else null end as Product_Category
+      , case when tr_cat1_max_date.customfield = 21347 then tr_cat1_msg.customvalue else null end as Message_Type
+      , case when tr_cat1_max_date.customfield = 21349 then tr_cat1_msg.customvalue else null end as Regular_Status    
+      , case when tr_cat1_max_date.customfield = 21345 then tr_cat1_value.numbervalue else null end as Request_Numbers           
+      , case when tr_cat1_max_date.customfield = 21348 then tr_cat1_msg.customvalue else null end as Customer_Effect 
+      , case when tr_cat1_max_date.customfield = 21363 then tr_cat1_msg.customvalue else null end as Training_Request      
+      , case when tr_cat1_max_date.customfield = 21350 then tr_cat1_msg.customvalue else null end as FAQ_category      
+      , case when tr_cat1_max_date.customfield = 21361 then tr_cat1_msg.customvalue else null end as Type_of_enquiry
+      , case when tr_cat1_max_date.customfield = 19053 then tr_cat1_msg.customvalue else null end as location
+      , case when tr_cat1_max_date.customfield = 19118 then tr_cat1_msg.customvalue else null end as center
+      , case when tr_cat1_max_date.customfield = 21378 then tr_cat1_msg.customvalue else null end as Trainer_Separation
+      , case when tr_cat1_max_date.customfield = 19054 then tr_cat1_value.stringvalue else null end as cti_id
+      , case when tr_cat1_max_date.customfield = 16425 then tr_cat1_value.stringvalue else null end as account_id
+      , case when tr_cat1_max_date.customfield = 21352 then tr_cat1_msg.customvalue else null end as channel      
+      , case when tr_cat1_max_date.customfield = 21356 then tr_cat1_msg.customvalue else null end as Training_method_1
+      , case when tr_cat2_max_date.customfield = 21356 then tr_cat2_msg.customvalue else null end as Training_method_2     
+      , case when tr_cat1_max_date.customfield = 21354 then tr_cat1_msg.customvalue else null end as Training_target_1
+      , case when tr_cat2_max_date.customfield = 21354 then tr_cat2_msg.customvalue else null end as Training_target_2     
+      , case when tr_cat1_max_date.customfield = 21351 then tr_cat1_msg.customvalue else null end as Training_category                
+      , case when tr_cat1_max_date.customfield = 18948 then tr_cat1_value.stringvalue else null end as order_id
+      , case when tr_cat1_max_date.customfield = 21364 then tr_cat1_msg.customvalue else null end as Training_content 
+      , case when tr_cat1_max_date.customfield = 18926  then tr_cat1_value.stringvalue else null end as URL  
+      , case when tr_cat1_max_date.customfield = 16213  then tr_cat1_msg.customvalue else null end as PII
+      , case when tr_cat1_max_date.customfield = 21353  then tr_cat1_msg.customvalue else null end as Type_of_treatment_1
+      , case when tr_cat1_max_date.customfield = 21353  then tr_cat2_msg.customvalue else null end as Type_of_treatment_2
+      , case when tr_cat2_max_date.customfield = 21380 then tr_cat1_value.numbervalue else null end as Total_personel
+      , case when tr_cat1_max_date.customfield = 21381 then tr_cat1_value.numbervalue else null end as Training_personnel
+      , case when tr_cat1_max_date.customfield = 21443 then tr_cat1_value.stringvalue else null end as km_Root_cause            
+      , case when tr_cat1_max_date.customfield = 21365 then tr_cat1_msg.customvalue else null end as lnd_link
+      , case when tr_cat1_max_date.customfield = 16813 then tr_cat1_msg.customvalue else null end as emergency
+      , case when tr_cat1_max_date.customfield = 18005 then tr_cat1_value.stringvalue else null end as service_desk 
+      
+      , case when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"completeSLAData":[{"succeeded":%' 
+                  then cast(json_extract(tr_cat1_value.textvalue, '$.completeSLAData[0].remainingTimeInDaysAndMillis.remainingDaysWithinWeek') as integer) 
+             else null 
+             end as complete_remain_day       
+      , case when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"completeSLAData":[{"succeeded":%' 
+                  then cast(cast(json_extract(tr_cat1_value.textvalue, '$.completeSLAData[0].remainingTimeInDaysAndMillis.remainingMillisWithinDay') as integer) / (3600*1000) as integer)
+                  else null 
+                  end as complete_remain_hr
+                  
+       , case when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"completeSLAData":[{"succeeded":%' 
+                  then cast(cast(json_extract(tr_cat1_value.textvalue, '$.completeSLAData[0].elapsedTime') as double) / (3600*1000) as double) 
+                  else null end
+                  as complete_elapsed_hour  
+                  
+      , case when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"ongoingSLAData":{%'
+                  and cast(json_extract(tr_cat1_value.textvalue, '$.ongoingSLAData.thresholdData.remainingTime') as double) > 0 
+                  then 0
+             when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"ongoingSLAData":{%'
+                  and cast(json_extract(tr_cat1_value.textvalue, '$.ongoingSLAData.thresholdData.remainingTime') as double) <= 0
+                  then 1
+             end as ongoing_SLA_yn           
+      , case when tr_cat1_max_date.customfield = 18010 and tr_cat1_value.textvalue like '%"completeSLAData":[{"succeeded":%' 
+                  then cast(json_extract(tr_cat1_value.textvalue, '$.completeSLAData[0].remainingTimeInDaysAndMillis.breached') as integer)  
+                  else NULL
+             end as complete_SLA_yn    
+     , DT.iyyyy_1_wk_nm
+     , DT.mm_nm
+     , DT.d_nm                                                                                                                                                                                    
+     , extract(hour from jiraissue.created) as hour    
+     , jiraissue.created
+                  , jiraissue.updated
+                  , jiraissue.resolutiondate
+                  , jiraissue.duedate
+     , jiraissue.status
+     , jiraissue.resolution
+     , jiraissue.reporter as reporter_id
+                  , jiraissue.assignee as assignee_id 
+      , concat('https://bts.coupang.net/browse/CUSTOMER-',cast(jiraissue.issuenum as varchar)) as link
+      from temp.jiraissue_km as jiraissue
+      left join(select iyyyy_1_wk_nm, dates, mm_nm, d_nm  from BIMART.DIM_DATE) as DT on date(jiraissue.created) = cast(DT.dates as date)  
+      left join (select max(updated) as updated 
+                        ,issue as issueid
+                        , issue
+                        , customfield
+                        from ods.customfieldvalue 
+                        where 1=1
+                              and parentkey is null                  
+                              group by customfield,issue) as tr_cat1_max_date on jiraissue.id=tr_cat1_max_date.issueid
+      left join (select max(updated) as updated 
+                        ,issue as issueid
+                        , issue
+                        , customfield
+                        from ods.customfieldvalue 
+                        where 1=1 
+                              and parentkey is not null                                
+                              group by customfield,issue) as tr_cat2_max_date on jiraissue.id=tr_cat2_max_date.issueid                        
+      left join (select updated
+                        , issue
+                        , stringvalue
+                        , textvalue
+                        , numbervalue
+                        from ods.customfieldvalue 
+                        where parentkey is null                              
+                        ) tr_cat1_value         on tr_cat1_max_date.updated=tr_cat1_value.updated and tr_cat1_max_date.issue=tr_cat1_value.issue
+      left join (select updated
+                        , issue
+                        , stringvalue
+                        , textvalue
+                        , numbervalue
+                        from ods.customfieldvalue 
+                        where parentkey is not null                             
+                        ) tr_cat2_value         on tr_cat2_max_date.updated=tr_cat2_value.updated and tr_cat2_max_date.issue=tr_cat2_value.issue                  
+      left join (select customvalue
+                                                                 , id 
+                                                                 from ods.customfieldoption                                                  
+                                                                 ) tr_cat1_msg    on cast(tr_cat1_value.stringvalue as varchar)=cast(tr_cat1_msg.id as varchar)
+                    left join (select customvalue
+                                                                 , id 
+                                                                 from ods.customfieldoption                                                  
+                                                                 ) tr_cat2_msg    on cast(tr_cat2_value.stringvalue as varchar)=cast(tr_cat2_msg.id as varchar)
+                   
+                  );
+                   
+ 
+drop table if exists temp.jirafield_Inspection_type_km;
+create table temp.jirafield_Inspection_type_km as
+(
+select id
+       , case when rn=1 then Inspection_type else null end as Inspection_type_1
+       , case when rn=2 then Inspection_type else null end as Inspection_type_2
+       , case when rn=3 then Inspection_type else null end as Inspection_type_3
+       , case when rn=4 then Inspection_type else null end as Inspection_type_4
+       , case when rn=5 then Inspection_type else null end as Inspection_type_5
+       , case when rn=6 then Inspection_type else null end as Inspection_type_6
+       from ( select id
+                    , Inspection_type
+                    , row_number() over (partition by id order by Inspection_type) as rn 
+                    from (select distinct id,Inspection_type from temp.jirafield_km) 
+                    where Inspection_type is not null
+                    )
+       );
+      
+drop table if exists temp.jirafield_Training_Request_km;
+create table temp.jirafield_Training_Request_km as
+(
+select id
+       , case when rn=1 then Training_Request else null end as Training_Request_1
+       , case when rn=2 then Training_Request else null end as Training_Request_2
+       from ( select id
+                    , Training_Request
+                    , row_number() over (partition by id order by Training_Request) as rn 
+                    from (select distinct id,Training_Request from temp.jirafield_km) 
+                    where Training_Request is not null
+                    )
+       );                
+      
+      
+drop table if exists temp.jira_result_km;
+create table temp.jira_result_km as
+(
+select distinct jiraissue.id
+       , case when jiraissue.issuetype = 'Knowledge Publishing' and jirafield_service_desk.service_desk='customer/d237ecca-d230-4058-8387-67294a8f26d3' then 'Knowledge Publishing'
+              when jiraissue.issuetype = 'Knowledge Publishing' and jirafield_service_desk.service_desk!='customer/d237ecca-d230-4058-8387-67294a8f26d3' then 'NOT Knowledge Publishing'
+              else jiraissue.issuetype
+         end as issue_type    
+       , jiraissue.summary
+       , jiraissue.template
+       , year(jiraissue.created) as created_year  
+       , month(jiraissue.created) as created_month 
+       , DT.iyyyy_1_wk as created_week
+       , DT.d_nm as created_d_nm
+       , day(jiraissue.created) as created_day
+       , hour(jiraissue.created) as created_hour
+       , date(jiraissue.created)  as created_date
+       , jiraissue.created
+       , jiraissue.updated   
+       , year(jiraissue.resolutiondate) as resolution_year
+       , month(jiraissue.resolutiondate) as resolution_month
+       , day(jiraissue.resolutiondate) as resolution_day
+       , date(jiraissue.resolutiondate) as resolution_date
+                    , jiraissue.resolutiondate
+                    , jiraissue.duedate
+                    , case when jiraissue.resolutiondate is not null and jiraissue.duedate >=cast(jiraissue.resolutiondate as date) then 0
+                            when jiraissue.resolutiondate is not null and jiraissue.duedate < cast(jiraissue.resolutiondate as date)  then 1
+                            else null end as duedate_yn 
+       , jiraissue.status
+       , jiraissue.resolution
+       , jiraissue.reporter as reporter_id
+                    , jiraissue.assignee as assignee_id                     
+                    , jiramember_reporter.display_name as reporter_name
+                    , jiramember_reporter.team_name as reporter_team
+                    , jiramember_assignee.display_name as assignee_name
+                    , jiramember_assignee.team_name as assignee_team
+       , jirafield_Business_type.Business_type
+       , jirafield_Category_1.Category_1
+       , jirafield_Category_2.Category_2
+       , jirafield_Inspection_type_1.Inspection_type_1
+                    , jirafield_Inspection_type_2.Inspection_type_2
+                    , jirafield_Inspection_type_3.Inspection_type_3
+                    , jirafield_Inspection_type_4.Inspection_type_4
+                    , jirafield_Inspection_type_5.Inspection_type_5
+                    , jirafield_Inspection_type_6.Inspection_type_6
+       , jirafield_Product_Category.Product_Category
+       , jirafield_Type_of_enquiry.Type_of_enquiry
+       , jirafield_Message_Type.Message_Type
+       , jirafield_Training_Target_1.Training_Target_1
+       , jirafield_Training_Target_2.Training_Target_2
+       , jirafield_Training_Request_1.Training_Request_1
+       , jirafield_Training_Request_2.Training_Request_2
+       , jirafield_FAQ_category.FAQ_category
+       , jirafield_account_id.account_id
+       , jirafield_lnd_link.lnd_link
+       , jirafield_Urgent_level.Urgent_level
+       , jirafield_Message_Category.Message_Category
+       , jirafield_Regular_Status.Regular_Status
+       , jirafield_Customer_Effect.Customer_Effect
+       , jirafield_Training_category.Training_category
+       , jirafield_url.url
+       , jirafield_emergency.emergency
+       , jirafield_km_Root_cause.km_Root_cause
+       , jirafield_Request_type.Request_type 
+       , jirafield_Request_Numbers.Request_Numbers
+       , jirafield_complete_remain_day.complete_remain_day
+       , jirafield_complete_remain_hr.complete_remain_hr
+       , jirafield_complete_elapsed_hour.complete_elapsed_hour
+       , jirafield_ongoing_SLA_yn.ongoing_SLA_yn
+       , jirafield_complete_SLA_yn.complete_SLA_yn
+       , concat('https://bts.coupang.net/browse/CUSTOMER-',cast(jiraissue.issuenum as varchar)) as link
+       
+       from temp.jiraissue_km as jiraissue
+       left join temp.jiramember as jiramember_reporter on jiraissue.reporter=jiramember_reporter.user_name
+       left join temp.jiramember as jiramember_assignee on jiraissue.assignee=jiramember_assignee.user_name 
+       
+       left join (select id, service_desk from temp.jirafield_km where service_desk is not null) as jirafield_service_desk on jiraissue.id=jirafield_service_desk.id
+       
+       left join(select mm_nm, dates, iyyyy_1_wk, d_nm  from BIMART.DIM_DATE) as DT on date(jiraissue.created) = cast(DT.dates as date)        
+       left join (select id, Inspection_type_1 from temp.jirafield_Inspection_type_km where Inspection_type_1 is not null) as jirafield_Inspection_type_1 on jiraissue.id=jirafield_Inspection_type_1.id
+       left join (select id, Inspection_type_2 from temp.jirafield_Inspection_type_km where Inspection_type_2 is not null) as jirafield_Inspection_type_2 on jiraissue.id=jirafield_Inspection_type_2.id
+       left join (select id, Inspection_type_3 from temp.jirafield_Inspection_type_km where Inspection_type_3 is not null) as jirafield_Inspection_type_3 on jiraissue.id=jirafield_Inspection_type_3.id
+       left join (select id, Inspection_type_4 from temp.jirafield_Inspection_type_km where Inspection_type_4 is not null) as jirafield_Inspection_type_4 on jiraissue.id=jirafield_Inspection_type_4.id
+       left join (select id, Inspection_type_5 from temp.jirafield_Inspection_type_km where Inspection_type_5 is not null) as jirafield_Inspection_type_5 on jiraissue.id=jirafield_Inspection_type_5.id
+       left join (select id, Inspection_type_6 from temp.jirafield_Inspection_type_km where Inspection_type_6 is not null) as jirafield_Inspection_type_6 on jiraissue.id=jirafield_Inspection_type_6.id      
+       left join (select id, Product_Category from temp.jirafield_km where Product_Category is not null) as jirafield_Product_Category on jiraissue.id=jirafield_Product_Category.id
+       left join (select id, Business_type from temp.jirafield_km where Business_type is not null) as jirafield_Business_type on jiraissue.id=jirafield_Business_type.id 
+       left join (select id, Type_of_enquiry from temp.jirafield_km where Type_of_enquiry is not null) as jirafield_Type_of_enquiry on jiraissue.id=jirafield_Type_of_enquiry.id       
+       left join (select id, Training_Request_1 from temp.jirafield_Training_Request_km where Training_Request_1 is not null) as jirafield_Training_Request_1 on jiraissue.id=jirafield_Training_Request_1.id
+       left join (select id, Training_Request_2 from temp.jirafield_Training_Request_km where Training_Request_2 is not null) as jirafield_Training_Request_2 on jiraissue.id=jirafield_Training_Request_2.id          
+       left join (select id, Category_1 from temp.jirafield_km where Category_1 is not null) as jirafield_Category_1 on jiraissue.id=jirafield_Category_1.id
+       left join (select id, Category_2 from temp.jirafield_km where Category_2 is not null) as jirafield_Category_2 on jiraissue.id=jirafield_Category_2.id       
+       left join (select id, Training_Target_1 from temp.jirafield_km where Training_Target_1 is not null) as jirafield_Training_Target_1 on jiraissue.id=jirafield_Training_Target_1.id
+       left join (select id, Training_Target_2 from temp.jirafield_km where Training_Target_2 is not null) as jirafield_Training_Target_2 on jiraissue.id=jirafield_Training_Target_2.id
+       left join (select id, FAQ_category from temp.jirafield_km where FAQ_category is not null) as jirafield_FAQ_category on jiraissue.id=jirafield_FAQ_category.id
+       left join (select id, account_id from temp.jirafield_km where account_id is not null) as jirafield_account_id on jiraissue.id=jirafield_account_id.id
+       left join (select id, message_type from temp.jirafield_km where message_type is not null) as jirafield_message_type on jiraissue.id=jirafield_message_type.id 
+       left join (select id, lnd_link from temp.jirafield_km where lnd_link is not null) as jirafield_lnd_link on jiraissue.id=jirafield_lnd_link.id
+       left join (select id, Urgent_level from temp.jirafield_km where Urgent_level is not null) as jirafield_Urgent_level on jiraissue.id=jirafield_Urgent_level.id
+       left join (select id, Message_Category from temp.jirafield_km where Message_Category is not null) as jirafield_Message_Category on jiraissue.id=jirafield_Message_Category.id
+       left join (select id, Regular_Status from temp.jirafield_km where Regular_Status is not null) as jirafield_Regular_Status on jiraissue.id=jirafield_Regular_Status.id
+       left join (select id, Customer_Effect from temp.jirafield_km where Customer_Effect is not null) as jirafield_Customer_Effect on jiraissue.id=jirafield_Customer_Effect.id
+       left join (select id, Training_category from temp.jirafield_km where Training_category is not null) as jirafield_Training_category on jiraissue.id=jirafield_Training_category.id     
+       left join (select id, url from temp.jirafield_km where url is not null) as jirafield_url on jiraissue.id=jirafield_url.id
+       left join (select id,  emergency from temp.jirafield_km where  emergency is not null) as jirafield_emergency on jiraissue.id=jirafield_emergency.id
+       left join (select id, km_Root_cause from temp.jirafield_km where km_Root_cause is not null) as jirafield_km_Root_cause on jiraissue.id=jirafield_km_Root_cause.id      
+       left join (select id, Request_type from temp.jirafield_km where Request_type is not null) as jirafield_Request_type on jiraissue.id=jirafield_Request_type.id      
+       left join (select id, Request_Numbers from temp.jirafield_km where Request_Numbers is not null) as jirafield_Request_Numbers on jiraissue.id=jirafield_Request_Numbers.id
+       left join (select id, complete_remain_day from temp.jirafield_km where complete_remain_day is not null) as jirafield_complete_remain_day on jiraissue.id=jirafield_complete_remain_day.id
+       left join (select id, complete_remain_hr from temp.jirafield_km where complete_remain_hr is not null) as jirafield_complete_remain_hr on jiraissue.id=jirafield_complete_remain_hr.id
+       left join (select id, ongoing_SLA_yn from temp.jirafield_km where ongoing_SLA_yn is not null) as jirafield_ongoing_SLA_yn on jiraissue.id=jirafield_ongoing_SLA_yn.id
+       left join (select id,  complete_SLA_yn from temp.jirafield_km where  complete_SLA_yn is not null) as jirafield_complete_SLA_yn on jiraissue.id=jirafield_complete_SLA_yn.id
+       left join (select id,  complete_elapsed_hour from temp.jirafield_km where  complete_elapsed_hour is not null) as jirafield_complete_elapsed_hour on jiraissue.id=jirafield_complete_elapsed_hour.id
+       );
+      
+ select * 
+        from temp.jira_result_km
+        where issue_type != 'NOT Knowledge Publishing';

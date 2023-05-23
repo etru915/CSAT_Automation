@@ -1,0 +1,29 @@
+# LMS 내 특정 강좌에 포함된 모듈 ID 가져오기
+
+import requests
+import json
+import pandas as pd
+from pandas import DataFrame
+import time
+
+url_value1 = "https://api.litmos.com/v1.svc/courses/"
+url_value2 = ["9nyyeXOvU7M1", "rh5sKQhYGJQ1","I6nEf9b33XU1","z2w0TuvTcms1","Os-1bnTK9_U1"] # 코스 ID
+url_value3 = "/modules?source=My-App&format=json&limit=1000"
+apikey = '6e169a2d-ce5c-4f58-845f-14ff8416e4fa'
+payload =""
+
+headers= {'apikey':apikey , "Content-Type":"application/json"} #내 API 키
+
+df_datas = []
+
+for i in url_value2:
+    response_value = requests.request("get",url_value1 + i + url_value3,  headers=headers, data = payload, verify=False)
+    print("get ->" + i +" Module list status : " , response_value.status_code)
+    data = json.loads(response_value.text)
+    df = pd.json_normalize(data)
+    df["Course ID"] = i
+    df_datas.append(df)
+    time.sleep(1)
+
+df_merge = pd.concat(df_datas,sort =False , ignore_index= True)
+df_merge.to_excel("C://Users//zeno915//Desktop//Litmos LMS Modules in Courses.xlsx")
